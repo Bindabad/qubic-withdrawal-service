@@ -1,0 +1,19 @@
+{
+  "name": "qubic-withdrawal-service",
+  "version": "1.0.0",
+  "description": "Node.js service for processing real Qubic blockchain withdrawals",
+  "main": "withdrawal-service.js",
+  "scripts": {
+    "start": "node withdrawal-service.js"
+  },
+  "dependencies": {
+    "@qubic-lib/qubic-ts-library": "^0.1.6",
+    "@supabase/supabase-js": "^2.58.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
