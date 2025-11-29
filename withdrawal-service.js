@@ -44,7 +44,7 @@ app.use(cors({
 }));
 
 // Initialize Bolt Database client
-const Bolt Database = createClient(SUPABASE_URL, SUPABASE_KEY);
+const Bolt Database = createClient(supabase_URL, supabase_KEY);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
