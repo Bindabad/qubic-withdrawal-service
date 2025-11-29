@@ -24,29 +24,24 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuration
 const TREASURY_SEED = process.env.TREASURY_WALLET_SEED;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const QUBIC_RPC_URL = 'https://rpc.qubic.org/v1/';
 
-// Validate configuration
 if (!TREASURY_SEED || !SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('❌ Missing required environment variables!');
+  console.error('Missing required environment variables!');
   console.error('Required: TREASURY_WALLET_SEED, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
 
-// Middleware
 app.use(express.json());
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*'
 }));
 
-// Initialize Bolt Database client
 const Bolt Database = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
@@ -55,10 +50,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Process withdrawal endpoint
 app.post('/process-withdrawal', async (req, res) => {
   const startTime = Date.now();
-  console.log('📥 Received withdrawal request:', req.body);
+  console.log('Received withdrawal request:', req.body);
 
   try {
     const { withdrawalId } = req.body;
@@ -70,8 +64,7 @@ app.post('/process-withdrawal', async (req, res) => {
       });
     }
 
-    // Fetch withdrawal from database
-    console.log('🔍 Fetching withdrawal:', withdrawalId);
+    console.log('Fetching withdrawal:', withdrawalId);
     const { data: withdrawal, error: fetchError } = await Bolt Database
       .from('withdrawals')
       .select('*')
@@ -79,7 +72,7 @@ app.post('/process-withdrawal', async (req, res) => {
       .single();
 
     if (fetchError || !withdrawal) {
-      console.error('❌ Withdrawal not found:', fetchError);
+      console.error('Withdrawal not found:', fetchError);
       return res.status(404).json({
         success: false,
         error: 'Withdrawal not found'
@@ -87,14 +80,13 @@ app.post('/process-withdrawal', async (req, res) => {
     }
 
     if (withdrawal.status !== 'pending') {
-      console.log('⚠️ Withdrawal already processed:', withdrawal.status);
+      console.log('Withdrawal already processed:', withdrawal.status);
       return res.status(400).json({
         success: false,
         error: `Withdrawal already ${withdrawal.status}`
       });
     }
 
-    // Validate treasury balance
     const { data: aiMined } = await Bolt Database
       .from('transactions')
       .select('amount')
@@ -112,7 +104,7 @@ app.post('/process-withdrawal', async (req, res) => {
     const availableBalance = treasuryBalance - totalWithdrawalAmount;
 
     if (availableBalance < Number(withdrawal.amount)) {
-      console.log('⚠️ Insufficient balance:', availableBalance, '<', withdrawal.amount);
+      console.log('Insufficient balance:', availableBalance, '<', withdrawal.amount);
       await Bolt Database
         .from('withdrawals')
         .update({ status: 'failed' })
@@ -124,17 +116,15 @@ app.post('/process-withdrawal', async (req, res) => {
       });
     }
 
-    // Get current tick from Qubic network
-    console.log('⏰ Fetching current tick...');
+    console.log('Fetching current tick...');
     const tickResponse = await fetch(`${QUBIC_RPC_URL}status`);
     const tickData = await tickResponse.json();
     const currentTick = tickData.lastProcessedTick?.tickNumber || 0;
     const targetTick = currentTick + 20;
 
-    console.log(`📊 Current tick: ${currentTick}, Target tick: ${targetTick}`);
+    console.log(`Current tick: ${currentTick}, Target tick: ${targetTick}`);
 
-    // Create transaction
-    console.log('🔐 Creating and signing transaction...');
+    console.log('Creating and signing transaction...');
     const helper = new QubicHelper();
     const sourceId = helper.createIdPackage(TREASURY_SEED);
 
@@ -150,7 +140,7 @@ app.post('/process-withdrawal', async (req, res) => {
     const packageData = transaction.getPackageData();
     const base64Transaction = packageData.toString('base64');
 
-    console.log('📡 Broadcasting transaction to Qubic network...');
+    console.log('Broadcasting transaction to Qubic network...');
     const broadcastResponse = await fetch(`${QUBIC_RPC_URL}broadcast-transaction`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -159,7 +149,7 @@ app.post('/process-withdrawal', async (req, res) => {
 
     if (!broadcastResponse.ok) {
       const errorText = await broadcastResponse.text();
-      console.error('❌ Broadcast failed:', errorText);
+      console.error('Broadcast failed:', errorText);
       throw new Error(`Broadcast failed: ${errorText}`);
     }
 
@@ -170,10 +160,9 @@ app.post('/process-withdrawal', async (req, res) => {
       throw new Error('No transaction ID returned from broadcast');
     }
 
-    console.log('✅ Transaction broadcast successful:', txHash);
+    console.log('Transaction broadcast successful:', txHash);
 
-    // Update database
-    console.log('💾 Updating database...');
+    console.log('Updating database...');
     await Bolt Database
       .from('withdrawals')
       .update({
@@ -196,7 +185,7 @@ app.post('/process-withdrawal', async (req, res) => {
       .limit(1);
 
     const processingTime = Date.now() - startTime;
-    console.log(`✅ Withdrawal completed in ${processingTime}ms`);
+    console.log(`Withdrawal completed in ${processingTime}ms`);
 
     res.json({
       success: true,
@@ -207,7 +196,7 @@ app.post('/process-withdrawal', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Withdrawal processing error:', error);
+    console.error('Withdrawal processing error:', error);
 
     try {
       if (req.body.withdrawalId) {
@@ -227,7 +216,6 @@ app.post('/process-withdrawal', async (req, res) => {
   }
 });
 
-// Get treasury info endpoint
 app.get('/treasury-info', async (req, res) => {
   try {
     const helper = new QubicHelper();
@@ -247,7 +235,6 @@ app.get('/treasury-info', async (req, res) => {
   }
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({
@@ -256,16 +243,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
 app.listen(PORT, () => {
-  console.log('🚀 Qubic Withdrawal Service Started');
-  console.log(`📡 Server running on port ${PORT}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-  console.log(`💰 Treasury configured: ${TREASURY_SEED ? 'Yes ✅' : 'No ❌'}`);
-  console.log('');
+  console.log('Qubic Withdrawal Service Started');
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`Treasury configured: ${TREASURY_SEED ? 'Yes' : 'No'}`);
 });
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully...');
   process.exit(0);
