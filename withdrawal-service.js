@@ -8,9 +8,9 @@
  * npm install express @qubic-lib/qubic-ts-library @supabase/Bolt Database-js cors dotenv
  *
  * Environment Variables Required:
- * - TREASURY_WALLET_SEED: Your treasury wallet seed (55 characters)
- * - SUPABASE_URL: Your Bolt Database project URL
- * - SUPABASE_SERVICE_ROLE_KEY: Your Bolt Database service role key
+ * - TREASURY_WALLET_SEED: cdmdaqmuvoedlphmdedanqyvhmfabxthbzvzujdwgxucvatroguanro
+ * - SUPABASE_URL: https://oeoocofmyzauwzbqmoyy.supabase.co
+ * - SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9lb29jb2ZteXphdXd6YnFtb3l5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzkxNDAyNSwiZXhwIjoyMDc5NDkwMDI1fQ.LMBcKldMuRMESdW4hPDvFwxcqRNDcm3syr-Xwr8DxCc
  * - PORT: Port to run on (default: 3000)
  * - ALLOWED_ORIGINS: Comma-separated list of allowed origins (optional)
  */
