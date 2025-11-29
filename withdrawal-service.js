@@ -129,7 +129,7 @@ app.post('/process-withdrawal', async (req, res) => {
     const tickResponse = await fetch(`${QUBIC_RPC_URL}status`);
     const tickData = await tickResponse.json();
     const currentTick = tickData.lastProcessedTick?.tickNumber || 0;
-    const targetTick = currentTick + 20; // Add safety margin
+    const targetTick = currentTick + 20;
 
     console.log(`📊 Current tick: ${currentTick}, Target tick: ${targetTick}`);
 
@@ -209,7 +209,6 @@ app.post('/process-withdrawal', async (req, res) => {
   } catch (error) {
     console.error('❌ Withdrawal processing error:', error);
 
-    // Try to mark as failed in database
     try {
       if (req.body.withdrawalId) {
         await Bolt Database
